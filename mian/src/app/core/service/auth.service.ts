@@ -121,4 +121,10 @@ export class AuthService {
     const headers = { Authorization: `Bearer ${token}` };
     return this.http.post(url, null, { headers }).toPromise();
   }
+getUserByTaskId(taskId: string): Observable<any> {
+  // Construct the request body
+  const requestBody = { taskId: taskId };
+  // Make a POST request with the task ID in the body
+  return this.http.post(`${this.apiUrl}/user-by-task`, requestBody);
+}
 }

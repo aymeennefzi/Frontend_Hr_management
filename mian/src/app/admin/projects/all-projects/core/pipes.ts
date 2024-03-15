@@ -40,3 +40,15 @@ export class PluralPipe implements PipeTransform {
   }
 
 }
+@Pipe({
+  name: 'stripHtml',
+  standalone: true
+})
+export class StripHtmlPipe implements PipeTransform {
+
+  transform(value: string): string {
+    if (!value) return '';
+    return value.replace(/<[^>]+>/g, ''); // This regex removes HTML tags
+  }
+
+}

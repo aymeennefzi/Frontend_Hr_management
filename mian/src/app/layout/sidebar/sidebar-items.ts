@@ -62,6 +62,7 @@ export const ROUTES: RouteInfo[] = [
     badgeClass: '',
     role: ['Admin'],
     submenu: [
+   
       {
         path: '/admin/projects/allProjects',
         title: 'MENUITEMS.PROJECTS.LIST.ALL-PROJECTS',
@@ -86,18 +87,7 @@ export const ROUTES: RouteInfo[] = [
         role: [''],
         submenu: [],
       },
-      {
-        path: '/admin/projects/estimates',
-        title: 'MENUITEMS.PROJECTS.LIST.ESTIMATES',
-        iconType: '',
-        icon: '',
-        class: 'ml-menu',
-        groupTitle: false,
-        badge: '',
-        badgeClass: '',
-        role: [''],
-        submenu: [],
-      },
+    
       {
         path: '/admin/projects/projectDetails',
         title: 'MENUITEMS.PROJECTS.LIST.PROJECT-DETAILS',
@@ -110,6 +100,33 @@ export const ROUTES: RouteInfo[] = [
         role: [''],
         submenu: [],
       },
+    ],
+  },
+  {
+    path: '',
+    title: 'Mission',
+    iconType: 'feather',
+    icon: 'grid',
+    class: 'menu-toggle',
+    groupTitle: false,
+    badge: '',
+    badgeClass: '',
+    role: ['Admin'],
+    submenu: [
+   
+      {
+        path: '/admin/mission/allmissions',
+        title: 'Missions',
+        iconType: '',
+        icon: '',
+        class: 'ml-menu',
+        groupTitle: false,
+        badge: '',
+        badgeClass: '',
+        role: [''],
+        submenu: [],
+      },
+     
     ],
   },
   {

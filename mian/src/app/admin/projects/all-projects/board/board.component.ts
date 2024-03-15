@@ -3,16 +3,20 @@ import { CdkDragDrop, CdkDropList, CdkDrag } from '@angular/cdk/drag-drop';
 
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
-import { Project, ProjectStatus } from '../core/project.model';
+import { Project, ProjectStatus, TypeStatutProjet } from '../core/project.model';
 import { ProjectService } from '../core/project.service';
 import { ProjectDialogComponent } from '../project-dialog/project-dialog.component';
 import { Direction } from '@angular/cdk/bidi';
-import { TruncatePipe, PluralPipe } from '../core/pipes';
+import { TruncatePipe, PluralPipe, StripHtmlPipe } from '../core/pipes';
 import { DatePipe, KeyValuePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import Swal from 'sweetalert2';
+import * as moment from 'moment';
+import { Router } from '@angular/router';
+
 
 @Component({
     selector: 'app-board',
@@ -20,6 +24,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     styleUrls: ['./board.component.scss'],
     standalone: true,
     imports: [
+      StripHtmlPipe,
         CdkDropList,
         CdkDrag,
         MatProgressBarModule,
@@ -34,33 +39,25 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 })
 export class BoardComponent implements OnInit {
   public lists: object;
-
+  projects: any[] = [];
   constructor(
     private projectService: ProjectService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private r:Router
+ 
   ) {
     this.lists = {};
   }
 
   public ngOnInit(): void {
-    this.projectService.getObjects().subscribe((projects: Project[]) => {
-      // split project to status categories
-      this.lists = {
-        NEWPROJECTS: projects.filter(
-          (project) => project.status === ProjectStatus.NEWPROJECTS
-        ),
-        RUNNING: projects.filter(
-          (project) => project.status === ProjectStatus.RUNNING
-        ),
-        ONHOLD: projects.filter(
-          (project) => project.status === ProjectStatus.ONHOLD
-        ),
-        FINISHED: projects.filter(
-          (project) => project.status === ProjectStatus.FINISHED
-        ),
-      };
+    this.projectService.getProjects().subscribe((projects) => {
+      // First, assign the projects data to this.projects
+      this.projects = projects;
+    
+      // Then, split projects into status categories
+
     });
+    
   }
 
   unsorted = (): number => {
@@ -75,73 +72,69 @@ export class BoardComponent implements OnInit {
       this.projectService.updateObject(project);
     }
   }
+  
 
-  public addProject(name: string, status: any): void {
-    if (!/\S/.test(name)) {
-      // do not add project if name is empty or contain white spaces only
-      return;
-    }
-    this.projectService.createOject({
-      name,
-      status: ProjectStatus[status],
-    });
-  }
 
-  public removeProject(project: Project): void {
-    // show "deleted" info
-    // const snack = this.snackBar.open("The Project has been deleted", "Undo");
-    const snack = this.snackBar.open(
-      'Project deleted Successfully...!!!',
-      'Undo',
-      {
-        duration: 4000,
-        verticalPosition: 'bottom',
-        horizontalPosition: 'center',
-        panelClass: 'snackbar-danger',
+  public removeProject(id: string): void {
+    Swal.fire({
+      title: 'Êtes-vous sûr?',
+      text: "Vous ne pourrez pas revenir en arrière!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Oui, supprimez-le!'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.projectService.deleteProject(id).subscribe(() => {
+          Swal.fire(
+            'Supprimé!',
+            'Votre projet a été supprimé.',
+            'success'
+          );
+          this.ngOnInit(); // Ou une autre méthode pour actualiser la liste des projets
+        }, (error) => {
+          // Gérer l'erreur ici, par exemple :
+          Swal.fire(
+            'Erreur!',
+            'La suppression du projet a échoué.',
+            'error'
+          );
+        });
       }
-    );
-    // put project to the trash
-    this.projectService.detachObject(project);
-    // when snack has been removed (dismissed)
-    snack.afterDismissed().subscribe((info) => {
-      if (info.dismissedByAction !== true) {
-        // if dismissed not by undo click (so it dissappeared)
-        // then get project by id and delete it
-        this.projectService.deleteObject(project);
-      }
-    });
-    // snack action has been taken
-    snack.onAction().subscribe(() => {
-      // undo button clicked, so remove project from the trash
-      this.projectService.attachObject(project);
     });
   }
 
   public newProjectDialog(): void {
-    this.dialogOpen('Create new project', null);
+    this.dialogOpen('Create new project', null,null);
   }
 
-  public editProjectDialog(project: Project): void {
-    this.dialogOpen('Edit project', project);
+  public editProjectDialog(id: string,projectt:any): void {
+    this.dialogOpen('Edit project', id,projectt);
   }
-
-  private dialogOpen(title: string, project: Project | any): void {
-    let tempDirection: Direction;
-    if (localStorage.getItem('isRtl') === 'true') {
-      tempDirection = 'rtl';
-    } else {
-      tempDirection = 'ltr';
-    }
-    // open angular material dialog
+  public route(id: string): void {
+    this.r.navigate(['admin/projects/estimates', id]);
+  }
+  
+  
+  private dialogOpen(title: string, projectId: string| null ,projectt:any| null): void {
+    let tempDirection: Direction = localStorage.getItem('isRtl') === 'true' ? 'rtl' : 'ltr';
     this.dialog.open(ProjectDialogComponent, {
       height: '85%',
       width: '55%',
       autoFocus: true,
       data: {
         title,
-        project,
+        projectId, // projectId can now be a string or null
+        projectt,
       },
       direction: tempDirection,
     });
   }
+  
+  convertDate(dateStr: string): string {
+    return moment(dateStr, 'DD-MM-YYYY').format('YYYY-MM-DD');
+  }
+  
+  
 }

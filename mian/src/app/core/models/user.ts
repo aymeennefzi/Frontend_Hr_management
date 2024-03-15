@@ -1,5 +1,5 @@
 import { Role } from './role';
-
+import { TasksModel } from "app/admin/projects/all-projects/core/project.model";
 export class User {
   _id!: string;
   img!: string;
@@ -18,4 +18,5 @@ export class User {
   soldeMaladie !: number ;
   fonction !: string ;
   token !: string ;
+   tasks?:TasksModel[]
 }

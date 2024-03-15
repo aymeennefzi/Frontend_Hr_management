@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Project, ProjectAdapter } from './project.model';
+import { Project } from './project.model';
 // import { PROJECTS } from "./project.data";
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { UnsubscribeOnDestroyAdapter } from '@shared';
@@ -10,6 +10,7 @@ import { UnsubscribeOnDestroyAdapter } from '@shared';
   providedIn: 'root',
 })
 export class ProjectService extends UnsubscribeOnDestroyAdapter {
+  private baseUrl = 'http://localhost:3000/project'; 
   private trash: Set<number> = new Set([]); // trashed projects' id; set is better for unique ids
   // private _projects: BehaviorSubject<object[]> = new BehaviorSubject([]);
   private _projects = new BehaviorSubject<object[]>([]);
@@ -17,10 +18,10 @@ export class ProjectService extends UnsubscribeOnDestroyAdapter {
     this._projects.asObservable();
   private readonly API_URL = 'assets/data/projects.json';
 
-  constructor(private adapter: ProjectAdapter, private httpClient: HttpClient) {
+  constructor( private httpClient: HttpClient) {
     super();
     // this._projects.next(PROJECTS); // mock up backend with fake data (not Project objects yet!)
-    this.getAllProjectss();
+    this.getProjects();
   }
 
   /** CRUD METHODS */
@@ -35,68 +36,25 @@ export class ProjectService extends UnsubscribeOnDestroyAdapter {
     });
   }
 
-  private compareProjectGravity(a: Project, b: Project): number {
-    // if at least one of compared project deadlines is not null, compare deadline dates
-    // (further date comes first), else compare priority (larger priority comes first)
-    if (a.deadline !== null || b.deadline !== null) {
-      // simply compare dates without converting to numbers
-      return -(a.deadline! > b.deadline!) || +(a.deadline! < b.deadline!);
-    } else {
-      return b.priority - a.priority;
-    }
-  }
 
-  public getObjects(): Observable<Project[]> {
-    return this.projects.pipe(
-      map((data: any[]) =>
-        data
-          .filter(
-            // do not return objects marked for delete
-            (item: any) => !this.trash.has(item.id)
-          )
-          .map(
-            // convert objects to Project instances
-            (item: any) => this.adapter.adapt(item)
-          )
-          .sort(this.compareProjectGravity)
-      )
-    );
-  }
 
-  public getObjectById(id: number): Observable<Project> {
-    return this.projects.pipe(
-      map(
-        (data: any) =>
-          data
-            .filter(
-              // find object by id
-              (item: any) => item.id === id
-            )
-            .map(
-              // convert to Project instance
-              (item: any) => this.adapter.adapt(item)
-            )[0]
-      )
-    );
-  }
+
+
+
 
   public createOject(project: any): void {
     project.id = this._projects.getValue().length + 1; // mock Project object with fake id (we have no backend)
     this._projects.next(this._projects.getValue().concat(project));
   }
 
-  public updateObject(project: Project): void {
+  public updateObject(project: any): void {
     const projects = this._projects.getValue();
     const projectIndex = projects.findIndex((t: any) => t.id === project.id);
     projects[projectIndex] = project;
     this._projects.next(projects);
   }
 
-  public deleteObject(project: Project): void {
-    this._projects.next(
-      this._projects.getValue().filter((t: any) => t.id !== project.id)
-    );
-  }
+
 
   public detachObject(project: Project): void {
     // add project id to trash
@@ -111,4 +69,27 @@ export class ProjectService extends UnsubscribeOnDestroyAdapter {
     // force emit change for projects observers
     return this._projects.next(this._projects.getValue());
   }
+  createProject(project: any): Observable<any> {
+    return this. httpClient.post(`${this.baseUrl}`, project);
+  }
+
+  getProjects(): Observable<any[]> {
+    return this. httpClient.get<any[]>(`${this.baseUrl}`);
+  }
+
+  getProjectById(id: string): Observable<any> {
+    return this. httpClient.get(`${this.baseUrl}/${id}`);
+  }
+
+  updateProject(id: string, project: any): Observable<any> {
+    return this. httpClient.patch(`${this.baseUrl}/${id}`, project);
+  }
+
+  deleteProject(id: string): Observable<any> {
+    return this. httpClient.delete(`${this.baseUrl}/${id}`);
+  }
+  
+
+  
+
 }
